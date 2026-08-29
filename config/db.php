@@ -1,18 +1,14 @@
 <?php
-// config/db.php - Supabase IPv4 Shared Pooler Configuration
+// config/db.php - Supabase IPv4 Pooler Setup
 
-// Extract your project reference ID from your old host:
-// e.g., if old host was db.hqbajbpjedddzvxtglkf.supabase.co, your ref is hqbajbpjedddzvxtglkf
-$project_ref = 'hqbajbpjedddzvxtglkf'; 
-
-// Use the IPv4 shared pooler domain (AWS US-East regional pooler)
-$host     = 'aws-0-us-east-1.pooler.supabase.com'; 
-$port     = '5432'; // Port 5432 for Session Pooler mode
+// Replace with the EXACT Host copied from your Supabase Connect modal
+$host     = 'aws-1-eu-west-1.pooler.supabase.com'; // e.g., aws-0-eu-west-1.pooler.supabase.com or aws-1-us-east-2...
+$port     = '5432';                                 // Use port 6543 for Transaction Mode or 5432 for Session Mode
 $dbname   = 'postgres';
 
-// Shared Pooler requires the user format: postgres.[project-ref]
-$user     = 'postgres.' . $project_ref; 
-$password = 'cabrixjr2020@'; // Replace with your real Supabase password
+// Format MUST be postgres.[your-project-ref]
+$user     = 'postgres.hqbajbpjedddzvxtglkf'; 
+$password = 'cabrixjr2020@';        // Replace with your real Supabase password
 
 try {
     $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;user=$user;password=$password";
