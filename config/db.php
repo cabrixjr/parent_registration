@@ -5,7 +5,7 @@ $host     = 'db.hqbajbpjedddzvxtglkf.supabase.co';
 $port     = '5432';
 $dbname   = 'postgres';
 $user     = 'postgres';
-$password = 'YOUR_ACTUAL_SUPABASE_PASSWORD'; // Replace this with your real Supabase database password
+$password = 'cabrixjr2020@'; // Replace this with your real Supabase database password
 
 try {
     $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;user=$user;password=$password";
