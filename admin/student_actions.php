@@ -46,6 +46,14 @@ function parseXlsxFile($filePath) {
     return $rows;
 }
 
+// Clean hidden spaces and special control characters from imported strings
+function cleanInputString($str) {
+    if ($str === null) return '';
+    // Strip non-breaking spaces, control characters, carriage returns, and tabs
+    $cleaned = preg_replace('/[\x00-\x1F\x7F-\xA0\xC2\xA0]/u', '', (string)$str);
+    return trim($cleaned);
+}
+
 // -------------------------------------------------------------------------
 // 1. Action: Upload Student Roster (CSV & XLSX)
 // -------------------------------------------------------------------------
@@ -72,10 +80,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'upload_csv') {
             foreach ($sheetData as $row) {
                 if (count($row) < 2) continue;
 
-                $adm = trim(preg_replace('/[\x00-\x1F\x7F-\xA0]/u', '', $row[0] ?? ''));
-                $name = trim(preg_replace('/[\x00-\x1F\x7F-\xA0]/u', '', $row[1] ?? ''));
+                $adm  = cleanInputString($row[0] ?? '');
+                $name = cleanInputString($row[1] ?? '');
 
-                if (empty($adm) || empty($name) || strtolower($adm) === 'admission_no' || strtolower($adm) === 'admission no') {
+                if (empty($adm) || empty($name) || strtolower($adm) === 'admission_no' || strtolower($adm) === 'admission no' || strtolower($adm) === 's/n') {
                     continue;
                 }
 
@@ -90,7 +98,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'upload_csv') {
         // PATH B: CSV Files (.csv)
         else if ($fileExtension === 'csv') {
             $fileContent = file_get_contents($fileTmpPath);
-            $fileContent = str_replace("\xEF\xBB\xBF", '', $fileContent);
+            $fileContent = str_replace("\xEF\xBB\xBF", '', $fileContent); // Strip UTF-8 BOM
             file_put_contents($fileTmpPath, $fileContent);
 
             if (($handle = fopen($fileTmpPath, "r")) !== FALSE) {
@@ -101,10 +109,10 @@ if (isset($_POST['action']) && $_POST['action'] === 'upload_csv') {
                 while (($data = fgetcsv($handle, 1000, $delimiter)) !== FALSE) {
                     if (empty($data) || count($data) < 2) continue;
 
-                    $adm = trim(preg_replace('/[\x00-\x1F\x7F-\xA0]/u', '', $data[0]));
-                    $name = trim(preg_replace('/[\x00-\x1F\x7F-\xA0]/u', '', $data[1]));
+                    $adm  = cleanInputString($data[0] ?? '');
+                    $name = cleanInputString($data[1] ?? '');
 
-                    if (empty($adm) || empty($name) || strtolower($adm) === 'admission_no' || strtolower($adm) === 'admission no') {
+                    if (empty($adm) || empty($name) || strtolower($adm) === 'admission_no' || strtolower($adm) === 'admission no' || strtolower($adm) === 's/n') {
                         continue;
                     }
 
@@ -129,9 +137,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'upload_csv') {
 // -------------------------------------------------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'check_duplicate') {
     header('Content-Type: application/json');
-    $adm = trim($_GET['admission_no'] ?? '');
+    $adm = cleanInputString($_GET['admission_no'] ?? '');
 
-    $stmt = $pdo->prepare("SELECT full_name FROM students_list WHERE admission_no = :adm");
+    $stmt = $pdo->prepare("SELECT full_name FROM students_list WHERE TRIM(admission_no) ILIKE :adm");
     $stmt->execute(['adm' => $adm]);
     $existing = $stmt->fetch();
 
@@ -147,8 +155,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_duplicate') {
 // 3. Action: Manual Student Add or Overwrite
 // -------------------------------------------------------------------------
 if (isset($_POST['action']) && $_POST['action'] === 'add_manual_student') {
-    $adm = trim($_POST['admission_no'] ?? '');
-    $name = trim($_POST['full_name'] ?? '');
+    $adm  = cleanInputString($_POST['admission_no'] ?? '');
+    $name = cleanInputString($_POST['full_name'] ?? '');
 
     if (!empty($adm) && !empty($name)) {
         $stmt = $pdo->prepare("
