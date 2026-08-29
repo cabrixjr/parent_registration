@@ -8,7 +8,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
     exit;
 }
 
-// Helper function: Parse native .xlsx XML files without libraries
+// Helper function: Parse native .xlsx XML files without third-party libraries
 function parseXlsxFile($filePath) {
     $rows = [];
     $zip = new ZipArchive();
@@ -46,17 +46,21 @@ function parseXlsxFile($filePath) {
     return $rows;
 }
 
+// -------------------------------------------------------------------------
 // 1. Action: Upload Student Roster (CSV & XLSX)
+// -------------------------------------------------------------------------
 if (isset($_POST['action']) && $_POST['action'] === 'upload_csv') {
     if (isset($_FILES['student_file']) && $_FILES['student_file']['error'] === 0) {
         $fileName = $_FILES['student_file']['name'];
         $fileTmpPath = $_FILES['student_file']['tmp_name'];
         $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
+        // PostgreSQL ON CONFLICT syntax for Upsert operations
         $stmt = $pdo->prepare("
             INSERT INTO students_list (full_name, admission_no) 
             VALUES (:full_name, :admission_no)
-            ON DUPLICATE KEY UPDATE full_name = VALUES(full_name)
+            ON CONFLICT (admission_no) 
+            DO UPDATE SET full_name = EXCLUDED.full_name
         ");
 
         $count = 0;
@@ -120,7 +124,9 @@ if (isset($_POST['action']) && $_POST['action'] === 'upload_csv') {
     exit;
 }
 
+// -------------------------------------------------------------------------
 // 2. Action: Check Duplicate Student Admission Number (AJAX)
+// -------------------------------------------------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'check_duplicate') {
     header('Content-Type: application/json');
     $adm = trim($_GET['admission_no'] ?? '');
@@ -137,7 +143,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_duplicate') {
     exit;
 }
 
+// -------------------------------------------------------------------------
 // 3. Action: Manual Student Add or Overwrite
+// -------------------------------------------------------------------------
 if (isset($_POST['action']) && $_POST['action'] === 'add_manual_student') {
     $adm = trim($_POST['admission_no'] ?? '');
     $name = trim($_POST['full_name'] ?? '');
@@ -146,7 +154,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'add_manual_student') {
         $stmt = $pdo->prepare("
             INSERT INTO students_list (full_name, admission_no) 
             VALUES (:full_name, :admission_no)
-            ON DUPLICATE KEY UPDATE full_name = VALUES(full_name)
+            ON CONFLICT (admission_no) 
+            DO UPDATE SET full_name = EXCLUDED.full_name
         ");
         $stmt->execute(['admission_no' => $adm, 'full_name' => $name]);
 
@@ -154,4 +163,32 @@ if (isset($_POST['action']) && $_POST['action'] === 'add_manual_student') {
         exit;
     }
 }
+
+// -------------------------------------------------------------------------
+// 4. Action: Delete Student Record
+// -------------------------------------------------------------------------
+if (isset($_POST['action']) && $_POST['action'] === 'delete_student') {
+    $student_id = intval($_POST['student_id'] ?? 0);
+
+    if ($student_id > 0) {
+        try {
+            // Delete attendance records linked to student first
+            $stmtAtt = $pdo->prepare("DELETE FROM parents_attendence WHERE student_id = :id");
+            $stmtAtt->execute(['id' => $student_id]);
+
+            // Delete student record
+            $stmtStudent = $pdo->prepare("DELETE FROM students_list WHERE id = :id");
+            $stmtStudent->execute(['id' => $student_id]);
+
+            header("Location: dashboard.php?msg=" . urlencode("Student and associated attendance records deleted successfully."));
+            exit;
+        } catch (PDOException $e) {
+            header("Location: dashboard.php?err=" . urlencode("Failed to delete student: " . $e->getMessage()));
+            exit;
+        }
+    }
+}
+
+header("Location: dashboard.php");
+exit;
 ?>
