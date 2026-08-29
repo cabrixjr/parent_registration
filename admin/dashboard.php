@@ -34,6 +34,21 @@ $pending_students_count = $total_students - $visited_students_count;
     <link rel="stylesheet" href="../assets/css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .btn-danger-sm {
+            background-color: #ef4444;
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .btn-danger-sm:hover {
+            background-color: #dc2626;
+        }
+    </style>
 </head>
 <body>
 
@@ -45,7 +60,7 @@ $pending_students_count = $total_students - $visited_students_count;
     <div class="container">
         <!-- Top Navigation -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div>Welcome, <strong><?= htmlspecialchars($_SESSION['admin_name']) ?></strong></div>
+            <div>Welcome, <strong><?= htmlspecialchars($_SESSION['admin_name'] ?? 'Admin') ?></strong></div>
             <a href="logout.php" style="color: var(--danger); font-weight: 700; text-decoration: none;">Logout</a>
         </div>
 
@@ -152,22 +167,34 @@ $pending_students_count = $total_students - $visited_students_count;
                             <th>Student Name</th>
                             <th>Status</th>
                             <th>Visits</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($students_list as $index => $student): ?>
-                            <tr>
-                                <td><?= $index + 1 ?></td>
-                                <td><?= htmlspecialchars($student['admission_no']) ?></td>
-                                <td><?= htmlspecialchars($student['full_name']) ?></td>
-                                <td>
-                                    <span class="badge <?= $student['attendance_count'] > 0 ? 'badge-success' : 'badge-danger' ?>">
-                                        <?= $student['attendance_count'] > 0 ? 'VISITED' : 'NOT VISITED' ?>
-                                    </span>
-                                </td>
-                                <td><?= $student['attendance_count'] ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+                        <?php if (count($students_list) > 0): ?>
+                            <?php foreach ($students_list as $index => $student): ?>
+                                <tr>
+                                    <td><?= $index + 1 ?></td>
+                                    <td><?= htmlspecialchars($student['admission_no']) ?></td>
+                                    <td><?= htmlspecialchars($student['full_name']) ?></td>
+                                    <td>
+                                        <span class="badge <?= $student['attendance_count'] > 0 ? 'badge-success' : 'badge-danger' ?>">
+                                            <?= $student['attendance_count'] > 0 ? 'VISITED' : 'NOT VISITED' ?>
+                                        </span>
+                                    </td>
+                                    <td><?= $student['attendance_count'] ?></td>
+                                    <td>
+                                        <form action="student_actions.php" method="POST" onsubmit="return confirm('Are you sure you want to delete this student? All attendance records associated with this student will also be removed.');" style="margin: 0;">
+                                            <input type="hidden" name="action" value="delete_student">
+                                            <input type="hidden" name="student_id" value="<?= $student['id'] ?>">
+                                            <button type="submit" class="btn-danger-sm">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="6" style="text-align: center;">No students found in roster.</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
