@@ -1,14 +1,16 @@
 <?php
-// config/db.php - Supabase PostgreSQL Connection
+// config/db.php
 
 $host     = 'db.hqbajbpjedddzvxtglkf.supabase.co';
 $port     = '5432';
 $dbname   = 'postgres';
 $user     = 'postgres';
-$password = 'cabrixjr2020@'; // Replace this with your real Supabase database password
+$password = 'YOUR_ACTUAL_SUPABASE_PASSWORD';
 
 try {
-    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;user=$user;password=$password";
+    // Force IPv4 lookup using gethostbyname
+    $ipv4_host = gethostbyname($host);
+    $dsn = "pgsql:host=$ipv4_host;port=$port;dbname=$dbname;user=$user;password=$password";
     
     $pdo = new PDO($dsn, null, null, [
         PDO::ATTR_ERRMODE                  => PDO::ERRMODE_EXCEPTION,
