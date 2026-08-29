@@ -1,16 +1,19 @@
 <?php
-// config/db.php
+// config/db.php - Supabase PostgreSQL Connection
 
-$host = 'localhost';
-$dbname = 'kibaha_sec_db';
-$username = 'root';
-$password = '';
+$host     = 'db.hqbajbpjedddzvxtglkf.supabase.co';
+$port     = '5432';
+$dbname   = 'postgres';
+$user     = 'postgres';
+$password = 'YOUR_ACTUAL_SUPABASE_PASSWORD'; // Replace this with your real Supabase database password
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;user=$user;password=$password";
+    
+    $pdo = new PDO($dsn, null, null, [
+        PDO::ATTR_ERRMODE                  => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE       => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES         => false,
     ]);
 } catch (PDOException $e) {
     die("Database Connection Error: " . $e->getMessage());
