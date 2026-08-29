@@ -11,8 +11,16 @@ if (strlen($query) < 1) {
 }
 
 try {
-    // Search students whose full name contains the typed characters
-    $stmt = $pdo->prepare("SELECT id, full_name, admission_no FROM students_list WHERE full_name LIKE :query ORDER BY full_name ASC LIMIT 8");
+    // PostgreSQL ILIKE for case-insensitive search and TRIM for clean character matching
+    $stmt = $pdo->prepare("
+        SELECT id, full_name, admission_no 
+        FROM students_list 
+        WHERE TRIM(full_name) ILIKE :query 
+           OR TRIM(admission_no) ILIKE :query 
+        ORDER BY full_name ASC 
+        LIMIT 8
+    ");
+    
     $stmt->execute(['query' => '%' . $query . '%']);
     $students = $stmt->fetchAll();
 
